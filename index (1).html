@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Document Q&amp;A over a Knowledge Base</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,700&family=Public+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+<h1>Document Q&amp;A over a Knowledge Base</h1>
+<p class="sub">A symbolic AI system: it reads a structured document, turns it into facts, and answers questions by rules, search and inference. No NLP models and no retrieval-augmented generation.</p>
+<nav role="tablist">
+<button role="tab" aria-selected="true" data-t="kb">1. Document and knowledge base</button>
+<button role="tab" aria-selected="false" data-t="ask">2. Ask questions</button>
+<button role="tab" aria-selected="false" data-t="ev">3. Evaluation</button>
+<button role="tab" aria-selected="false" data-t="why">4. Design choices</button>
+</nav>
+
+<section id="kb" class="on">
+<div class="card">
+<h2>Input document</h2>
+<textarea id="doc" aria-label="Document text" spellcheck="false"></textarea>
+<div class="row">
+<button class="btn" id="build">Build knowledge base</button>
+<label class="btn alt" style="cursor:pointer">Upload .txt / .md<input id="file" type="file" accept=".txt,.md,text/plain" hidden></label>
+<button class="btn alt" id="sample">Reset to sample</button>
+</div>
+<p class="mut" style="margin-bottom:0">Format: <code>## Entity</code> starts a record, <code>Attribute: value, value</code> adds facts. Plain sentences such as <code>X is taught by Y.</code>, <code>X requires Y.</code> and <code>X is a Y.</code> are also extracted.</p>
+</div>
+<div class="card"><div class="stats" id="stats"></div></div>
+<div class="card"><h2>Stored facts (subject, predicate, object)</h2><div class="scroll"><table id="tri"></table></div></div>
+</section>
+
+<section id="ask">
+<div class="card">
+<h2>Ask the knowledge base</h2>
+<input type="text" id="qi" aria-label="Question" placeholder="e.g. Who is the head of the department of AID201?">
+<div class="row"><button class="btn" id="go">Answer</button></div>
+<div class="row" id="ex"></div>
+</div>
+<div class="card" id="out" aria-live="polite"><span class="mut">The answer and the reasoning behind it appear here.</span></div>
+</section>
+
+<section id="ev">
+<div class="card">
+<h2>Test set</h2>
+<p class="mut" style="margin-top:0">Each test has a question, the expected answer set and a category. Edit the JSON to add your own cases.</p>
+<textarea id="tests" aria-label="Test set JSON" spellcheck="false"></textarea>
+<div class="row"><button class="btn" id="run">Run evaluation</button></div>
+</div>
+<div class="card" id="evo"><span class="mut">Results appear here.</span></div>
+</section>
+
+<section id="why">
+<div class="card">
+<h2>Why a symbolic knowledge base</h2>
+<ul>
+<li><b>Knowledge representation.</b> Facts are stored as triples (subject, predicate, object) and indexed two ways: by subject and predicate, and by predicate and object. Together they form a semantic network, so every answer can be traced to stored facts.</li>
+<li><b>Extraction by rules.</b> Fixed pattern rules read record headers, <code>Attribute: value</code> lines and three sentence templates. Each triple keeps its source line and the rule that produced it. The system does not tokenise, tag, stem or embed text, and it does not retrieve passages.</li>
+<li><b>Question processing.</b> The question is matched against the knowledge base’s own vocabulary: entity names (longest match first), predicate keywords from a small hand-written lexicon, entity types and numbers. A set of intent rules then picks a strategy.</li>
+<li><b>Reasoning.</b> (a) Direct lookup of (entity, predicate). (b) Inverse lookup, for questions such as “which courses are taught by Dr. Rao”. (c) A transitive rule: a prerequisite of a prerequisite is also a prerequisite, computed by breadth-first search. (d) Multi-hop search: if an entity lacks a fact, follow its links to a related entity (course, then department, then head). (e) Yes/No verification of a claim against stored or derived facts.</li>
+<li><b>Why this fits.</b> The document is structured and the answers are exact facts, so rules and search give deterministic, explainable results with no training data. A question outside the knowledge base gets “no answer” rather than a guess.</li>
+<li><b>Limits.</b> The document must follow the controlled format, and questions must use words from the lexicon (extendable in <code>SYN</code>). Free-form prose and paraphrase are out of scope by design.</li>
+<li><b>Evaluation.</b> Exact-match accuracy, precision, recall and F1 over answer sets, reported per category. Unanswerable questions are included to test whether the system correctly refuses.</li>
+</ul>
+</div>
+</section>
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
